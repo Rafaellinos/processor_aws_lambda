@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 from uuid import uuid4
+import dateutil.tz
 
 import boto3
 from botocore.client import Config
@@ -18,11 +19,12 @@ def lambda_handler(event, context):
             record = event
         else:
             record = event[0]
+        brazil_tz = dateutil.tz.gettz('America/Sao_Paulo')
         table.put_item(
             Item={
                 'id': str(uuid4()),
-                'date': datetime.now().isoformat(),
-                **(record or {}),
+                'date': datetime.now(tz=brazil_tz).isoformat(),
+                **(json.loads(record.get("body", {})) or {}),
             }
         )
     except Exception as e:
@@ -37,3 +39,6 @@ def lambda_handler(event, context):
         'statusCode': 200,
         'body': json.dumps('Hello from Lambda!')
     }
+
+
+lambda_handler({"body": '{"name": "John Doe", "email": ""}'}, {})
